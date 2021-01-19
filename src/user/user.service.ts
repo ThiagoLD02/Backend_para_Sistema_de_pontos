@@ -1,33 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { Task } from '../data/task';
-import { userDto } from './dto/user.dto';
-
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserDTO } from './dto/user.dto';
+import { User } from './user.entity';
 @Injectable()
 export class UserService {
-  tasks: Task[] = [
-    { id: 1, user: 'Thiago', password: 'senha', role: 'master' },
-  ];
-  lastId: number = 1;
+  constructor(
+    @InjectRepository(User)
+    private user: Repository<User>,
+  ) {}
+
   getAll() {
-    return this.tasks;
+    const query = this.user;
   }
-  getById(id: number) {
-    const task: Task = this.tasks.find((value: Task) => {
-      value.id == id;
-    });
-
-    return task;
-  }
-  addUser(userParams: userDto) {
-    const user: Task = {
-      id: ++this.lastId,
-      password: userParams.password,
-      role: userParams.role,
-      user: userParams.user,
-    };
-    this.tasks.push(user);
-
-    return user;
-  }
+  getById(id: number) {}
+  addUser(userParams: UserDTO) {}
   //   update(task: Task) {}
 }
