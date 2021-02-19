@@ -1,4 +1,3 @@
-
 ## Installation
 
 ```bash
@@ -13,7 +12,7 @@ http://localhost:3000/
 # development
 $ npm run start
 
-# watch mode
+# watch mode - Para desenvolvimento
 $ npm run start:dev
 
 # production mode

@@ -1,4 +1,11 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Point } from 'src/point/point.entity';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('User')
 export class User extends BaseEntity {
@@ -19,7 +26,11 @@ export class User extends BaseEntity {
 
   @Column()
   role: string;
+  /* director, member, master*/
 
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToMany(() => Point, (point) => point.user)
+  points: Point[];
 }
