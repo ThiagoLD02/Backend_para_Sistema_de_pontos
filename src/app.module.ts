@@ -10,7 +10,7 @@ import { Point } from './point/point.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'senha',
+      password: '240120',
       database: 'sisPontos',
       entities: [User, Point],
       synchronize: true,

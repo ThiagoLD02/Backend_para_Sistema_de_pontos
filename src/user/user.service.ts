@@ -76,6 +76,7 @@ export class UserService {
     const users = await this.userRepository
       .createQueryBuilder('User')
       .select(['User.id AS value', 'User.username AS label'])
+      .orderBy('label', 'ASC')
       .getRawMany();
 
     return users;
