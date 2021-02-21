@@ -59,7 +59,7 @@ export class UserController {
   }
 
   @Post('/cadastro')
-  async cadastro(@Body() body: UserDTO): Promise<User> {
+  async cadastro(@Body() body: UserDTO) {
     return this.userService.cadastro(body);
   }
 

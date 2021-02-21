@@ -84,7 +84,10 @@ export class UserService {
     return users;
   }
 
-  async cadastro(userParams: UserDTO): Promise<User> {
+  async cadastro(userParams: UserDTO) {
+    if (userParams.role != 'director' && userParams.role != 'member')
+      throw new BadRequestException(`Cargo inexistente.`);
+
     const user = new User();
 
     user.email = userParams.email;
@@ -92,8 +95,7 @@ export class UserService {
     user.username = userParams.username;
     user.password = userParams.password;
     user.role = userParams.role;
-
-    return await this.userRepository.create(user).save();
+    this.userRepository.create(user).save();
   }
 
   async update(body: EditDTO): Promise<User> {
