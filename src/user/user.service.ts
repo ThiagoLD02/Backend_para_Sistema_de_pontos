@@ -75,11 +75,8 @@ export class UserService {
   async search(): Promise<SearchDTO[]> {
     const users = await this.userRepository
       .createQueryBuilder('User')
-      .select('User.id')
-      .addSelect('User.username')
-      .addSelect('User.email')
-      .orderBy('username', 'ASC')
-      .getMany();
+      .select(['User.id AS value', 'User.username AS label'])
+      .getRawMany();
 
     return users;
   }
