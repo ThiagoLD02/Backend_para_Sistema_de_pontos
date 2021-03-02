@@ -1,47 +1,26 @@
-## Installation
+## Instalar dependências
 
 ```bash
 $ npm install
 ```
 
+## Rota do servidor
+
 http://localhost:4001/
 
-## Running the app
+## Rodar a aplicação
 
 ```bash
 # development
 $ npm run start
 
-# watch mode - Para desenvolvimento
+# watch mode - Hot reload
 $ npm run start:dev
 
-# production mode
-$ npm run start:prod
 ```
 
-## Test
+## Tecnologias utilizadas
 
-```bash
-# unit tests
-$ npm run test
+<img alt="Nestjs" width="30px" src="https://d33wubrfki0l68.cloudfront.net/e937e774cbbe23635999615ad5d7732decad182a/26072/logo-small.ede75a6b.svg">  <a aling="center" href="https://nestjs.com/" /> Nestjs
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+<img alt="Postgres" width="30px" src="https://www.postgresql.org/media/img/about/press/elephant.png"> <a aling="center" href="https://www.postgresql.org/" /> Postgres
