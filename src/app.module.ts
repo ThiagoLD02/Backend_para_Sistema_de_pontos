@@ -3,6 +3,7 @@ import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user/user.entity';
 import { Point } from './point/point.entity';
+import { PointModule } from './point/point.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -16,6 +17,7 @@ import { Point } from './point/point.entity';
       synchronize: true,
     }),
     UserModule,
+    PointModule,
   ],
 })
 export class AppModule {}

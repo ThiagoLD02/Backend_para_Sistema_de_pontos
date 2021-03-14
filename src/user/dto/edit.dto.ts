@@ -1,7 +1,7 @@
 export class EditDTO {
   id: number;
   email: string;
-  cellphoneNumber: string;
+  phone: string;
   username: string;
   password: string;
 }

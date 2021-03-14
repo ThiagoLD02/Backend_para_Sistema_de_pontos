@@ -3,6 +3,7 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -12,12 +13,19 @@ export class Point extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'time without time zone' })
-  start: string;
+  @Column()
+  time: string;
 
-  @Column({ type: 'time without time zone' })
-  end: string;
+  @Column()
+  total: string;
+
+  @Column()
+  day: string;
+
+  @Column({ default: false })
+  running: boolean;
 
   @ManyToOne(() => User, (user) => user.points)
+  @JoinColumn({ name: 'userId' })
   user: User;
 }

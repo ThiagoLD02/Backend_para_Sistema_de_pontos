@@ -2,6 +2,6 @@ export class UserDTO {
   username: string;
   password: string;
   email: string;
-  celphoneNumber: string;
+  phone: string;
   role: string; // master, director, active, inative
 }

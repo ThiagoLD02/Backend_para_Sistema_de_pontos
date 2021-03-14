@@ -7,7 +7,9 @@ import {
   Param,
   Post,
   Put,
+  Redirect,
 } from '@nestjs/common';
+import { Point } from 'src/point/point.entity';
 import { DiretorDTO } from './dto/diretor.dto';
 import { EditDTO } from './dto/edit.dto';
 import { LoginDTO } from './dto/login.dto';
@@ -26,10 +28,6 @@ export class UserController {
   async getAll(): Promise<User[]> {
     return this.userService.getAll();
   }
-  @Get('/active')
-  async getActives(): Promise<User[]> {
-    return this.userService.getActives();
-  }
 
   @Get('/search')
   async search(): Promise<SearchDTO[]> {
@@ -39,6 +37,11 @@ export class UserController {
   @Get(':id')
   async getById(@Param('id') id: number): Promise<User> {
     return this.userService.getById(id);
+  }
+
+  @Get('/start/:id')
+  async start(@Param('id') id: number): Promise<Point> {
+    return this.userService.start(id);
   }
 
   @Get('/perfil/:id')
@@ -51,9 +54,14 @@ export class UserController {
     return this.userService.diretor(id);
   }
 
-  @Post('/login')
+  // @Get()
+  // async membersPoints(){
+  //   return this.userService.membersPoints();
+  // }
+
   @HttpCode(200)
   @HttpCode(404)
+  @Post('/login')
   async login(@Body() body: LoginDTO): Promise<LoginRespDTO> {
     return this.userService.login(body);
   }

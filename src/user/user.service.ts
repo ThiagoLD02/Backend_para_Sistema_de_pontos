@@ -8,30 +8,38 @@ import { PerfilDTO } from './dto/perfil.dto';
 import { SearchDTO } from './dto/search.dto';
 import { UserDTO } from './dto/user.dto';
 import { User } from './user.entity';
+import { PointService } from '../point/point.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly pointService: PointService,
   ) {}
 
   async getAll(): Promise<User[]> {
-    const user = await this.userRepository
+    const users = await this.userRepository
       .createQueryBuilder('Users')
+      .leftJoinAndSelect('Users.points', 'points')
       .orderBy('Users.id', 'ASC')
       .getMany();
-    return user;
-  }
-
-  async getActives(): Promise<User[]> {
-    return await this.userRepository.find({
-      where: { isActive: true },
-    });
+    if (!users) throw new BadRequestException('Nenhum usuario encontrado');
+    return users;
   }
 
   async getById(id: number): Promise<User> {
-    return await this.userRepository.findOne(id);
+    const user = await this.userRepository.findOne({
+      where: { id },
+      join: {
+        alias: 'Users',
+        leftJoinAndSelect: {
+          points: 'Users.points',
+        },
+      },
+    });
+    if (!user) throw new BadRequestException('Usuario não encontrado');
+    return user;
   }
 
   async login(body: LoginDTO): Promise<LoginRespDTO> {
@@ -55,9 +63,16 @@ export class UserService {
     const data = new PerfilDTO();
     data.username = user.username;
     data.email = user.email;
-    data.cellphoneNumber = user.celphoneNumber;
+    data.phone = user.phone;
+
+    data.points = await this.pointService.getPointsByUserId(user.id);
 
     return data;
+  }
+
+  async start(userId: number) {
+    const user = await this.getById(userId);
+    return await this.pointService.start(user);
   }
 
   async diretor(id: number): Promise<PerfilDTO> {
@@ -67,7 +82,7 @@ export class UserService {
     const data = new PerfilDTO();
     data.username = user.username;
     data.email = user.email;
-    data.cellphoneNumber = user.celphoneNumber;
+    data.phone = user.phone;
 
     return data;
   }
@@ -81,17 +96,32 @@ export class UserService {
     return users;
   }
 
+  // async membersPoints(){
+  //   const usersIds = await this.userRepository
+  //   .createQueryBuilder('User')
+  //   .select('User.id')
+  //   .getMany();
+  //   const points = await this.pointService.usersPoints(usersIds);
+  // }
+
   async cadastro(userParams: UserDTO) {
     if (userParams.role != 'director' && userParams.role != 'member')
       throw new BadRequestException(`Cargo inexistente.`);
 
     const user = new User();
+    if (!userParams.email) throw new BadRequestException(`Email invalido`);
+    if (!userParams.password) throw new BadRequestException(`Senha invalido.`);
+    if (!userParams.phone)
+      throw new BadRequestException(`Numerdo de celular invalido.`);
+    if (!userParams.username)
+      throw new BadRequestException(`Nome de usuario invalido.`);
 
     user.email = userParams.email;
-    user.celphoneNumber = userParams.celphoneNumber;
+    user.phone = userParams.phone;
     user.username = userParams.username;
     user.password = userParams.password;
     user.role = userParams.role;
+    user.points = [];
     this.userRepository.create(user).save();
   }
 
@@ -99,19 +129,19 @@ export class UserService {
     const user = await this.userRepository.findOne(body.id);
     if (!user) throw new BadRequestException(`Usuario não encontrado`);
 
-    if (body.cellphoneNumber) user.celphoneNumber = body.cellphoneNumber;
+    if (body.phone) user.phone = body.phone;
     if (body.email) user.email = body.email;
     if (body.password) user.password = body.password;
-    // if (body.role) user.role = body.role;
     if (body.username) user.username = body.username;
 
     return await (await this.userRepository.preload(user)).save();
   }
 
-  async remove(id: number): Promise<User> {
-    const user = await this.userRepository.findOne(id);
+  async remove(userId: number): Promise<User> {
+    const user = await this.userRepository.findOne(userId);
     if (!user) throw new BadRequestException(`Usuario não encontrado`);
-    this.userRepository.delete(id);
+    await this.pointService.delete(userId);
+    await this.userRepository.delete(userId);
     return user;
   }
 }

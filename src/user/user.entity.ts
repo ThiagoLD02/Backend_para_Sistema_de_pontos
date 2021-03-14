@@ -22,14 +22,11 @@ export class User extends BaseEntity {
   email: string;
 
   @Column()
-  celphoneNumber: string;
+  phone: string;
 
   @Column()
   role: string;
   /* director, member, master*/
-
-  @Column({ default: true })
-  isActive: boolean;
 
   @OneToMany(() => Point, (point) => point.user)
   points: Point[];
