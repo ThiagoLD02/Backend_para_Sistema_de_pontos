@@ -45,7 +45,7 @@ export class UserController {
   }
 
   @Get('/perfil/:id')
-  async perfil(@Param('id') id: number): Promise<PerfilDTO> {
+  async perfil(@Param('id') id: number) {
     return this.userService.perfil(id);
   }
 

@@ -9,6 +9,8 @@ import { SearchDTO } from './dto/search.dto';
 import { UserDTO } from './dto/user.dto';
 import { User } from './user.entity';
 import { PointService } from '../point/point.service';
+import { DiretorDTO } from './dto/diretor.dto';
+import { usersPointsDTO } from './dto/usersPoints.dto';
 
 @Injectable()
 export class UserService {
@@ -61,6 +63,7 @@ export class UserService {
     if (!user) throw new BadRequestException(`Usuario não encontrado`);
 
     const data = new PerfilDTO();
+
     data.username = user.username;
     data.email = user.email;
     data.phone = user.phone;
@@ -75,16 +78,54 @@ export class UserService {
     return await this.pointService.start(user);
   }
 
-  async diretor(id: number): Promise<PerfilDTO> {
+  async usersIds() {
+    const users = await this.userRepository
+      .createQueryBuilder('Users')
+      .select('Users.id')
+      .orderBy('Users.id', 'ASC')
+      .getMany();
+    var ids: number[] = [];
+    users.map(async (user) => {
+      ids.push(user.id);
+    });
+    return ids;
+  }
+
+  async usersNames() {
+    const users = await this.userRepository
+      .createQueryBuilder('Users')
+      .select('Users.username')
+      .orderBy('Users.username', 'ASC')
+      .getMany();
+    var usernames: string[] = [];
+    users.map(async (user) => {
+      usernames.push(user.username);
+    });
+
+    return usernames;
+  }
+
+  async diretor(id: number): Promise<DiretorDTO> {
     const user = await this.userRepository.findOne(id);
     if (!user) throw new BadRequestException(`Usuario não encontrado`);
 
-    const data = new PerfilDTO();
-    data.username = user.username;
-    data.email = user.email;
-    data.phone = user.phone;
+    const director = new DiretorDTO();
+    director.username = user.username;
+    director.email = user.email;
+    director.phone = user.phone;
+    const usersIds = await this.usersIds();
+    const usersNames = await this.usersNames();
 
-    return data;
+    const users: usersPointsDTO[] = [];
+    for (let i = 0; i < usersIds.length; i++) {
+      const aux = new usersPointsDTO();
+      aux.username = usersNames[i];
+      aux.points = await this.pointService.perfil(usersIds[i]);
+      users.push(aux);
+    }
+
+    director.users = users;
+    return director;
   }
 
   async search(): Promise<SearchDTO[]> {

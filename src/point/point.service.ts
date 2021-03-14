@@ -1,17 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { pointsDTO } from 'src/user/dto/points.dto';
+import { usersPointsDTO } from 'src/user/dto/usersPoints.dto';
 import { User } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { Point } from './point.entity';
 
 const days = [
+  'Domingo',
   'Segunda-Feira',
   'Terça-Feira',
   'Quarta-Feira',
   'Quinta-Feira',
   'Sexta-Feira',
   'Sabado',
-  'Domingo',
 ];
 
 @Injectable()
@@ -42,9 +44,10 @@ export class PointService {
     const points = await this.pointRepository
       .createQueryBuilder('Point')
       .where('Point.userId = :userId', { userId: userId })
-      .andWhere('Point.day = :day', { day: days[day - 1] })
+      .andWhere('Point.day = :day', { day: days[day] })
       .getMany();
     const index = points.length;
+    if (index == 0) return points[0];
     return points[index - 1];
   }
 
@@ -54,13 +57,21 @@ export class PointService {
     const hours = datetime.getHours();
     const minutes = datetime.getMinutes();
     const seconds = datetime.getSeconds();
-    const time = `${hours}:${minutes}:${seconds}`;
+
+    if (hours < 10) var hoursAux = '0' + hours.toString();
+    else var hoursAux = hours.toString();
+    if (minutes < 10) var minutesAux = '0' + minutes.toString();
+    else var minutesAux = minutes.toString();
+    if (seconds < 10) var secondsAux = '0' + seconds.toString();
+    else var secondsAux = seconds.toString();
+
+    const time = `${hoursAux}:${minutesAux}:${secondsAux}`;
     const todaysPoint = await this.getTodayLastPoint(user.id, today);
     if (!todaysPoint) {
       // This means that the user doesn't started any point today
       // Then we create a new one
       const point = new Point();
-      point.day = days[today - 1];
+      point.day = days[today];
       point.time = time;
       point.user = user;
       point.total = '00:00:00';
@@ -72,6 +83,7 @@ export class PointService {
       if (todaysPoint.running === true)
         throw new BadRequestException('Existe um ponto não finalizado');
       todaysPoint.time = time;
+      todaysPoint.running = true;
       (await this.pointRepository.preload(todaysPoint)).save();
       return todaysPoint;
     }
@@ -84,14 +96,12 @@ export class PointService {
     const endHours = datetime.getHours();
     const endMinutes = datetime.getMinutes();
     const endSeconds = datetime.getSeconds();
-    console.log([endHours, endMinutes, endSeconds], 'Fim');
     const point = await this.getTodayLastPoint(userId, today);
     if (!point || point.time === '00:00:00')
       throw new BadRequestException('Nenhum ponto iniciado');
     // Start => 00:00:00
     // When point was started
     const splitedStart = point.time.split(':');
-    console.log(splitedStart, 'Inicio');
     let startHours = parseInt(splitedStart[0]);
     let startMinutes = parseInt(splitedStart[1]);
     let startSeconds = parseInt(splitedStart[2]);
@@ -116,13 +126,15 @@ export class PointService {
     hours = endHours - startHours;
 
     if (hours < 10) var hoursAux = '0' + hours.toString();
+    else var hoursAux = hours.toString();
     if (minutes < 10) var minutesAux = '0' + minutes.toString();
+    else var minutesAux = minutes.toString();
     if (seconds < 10) var secondsAux = '0' + seconds.toString();
+    else var secondsAux = seconds.toString();
 
     point.total = `${hoursAux}:${minutesAux}:${secondsAux}`;
     point.time = '00:00:00';
     point.running = false;
-    console.log([hours, minutes, seconds], 'Resultado');
 
     return await (await this.pointRepository.preload(point)).save();
   }
@@ -141,11 +153,9 @@ export class PointService {
     if (times.length < 5) {
       const size = times.length;
       for (let index = 0; index < 5 - size; index++) {
-        console.log(index, 'index');
         times.push('00:00:00');
       }
     }
-    console.log(times, 'times');
 
     var Intsum = [0, 0, 0];
     times.forEach((time) => {
@@ -168,11 +178,16 @@ export class PointService {
     var sum = '';
 
     if (Intsum[0] < 10) var hoursAux = '0' + Intsum[0].toString();
+    else var hoursAux = Intsum[0].toString();
     if (Intsum[1] < 10) var minutesAux = '0' + Intsum[1].toString();
+    else var minutesAux = Intsum[1].toString();
     if (Intsum[2] < 10) var secondsAux = '0' + Intsum[2].toString();
+    else var secondsAux = Intsum[2].toString();
 
     sum = `${hoursAux}:${minutesAux}:${secondsAux}`;
-    const res = { times, sum };
+    const res = new pointsDTO();
+    res.sum = sum;
+    res.times = times;
     return res;
   }
 

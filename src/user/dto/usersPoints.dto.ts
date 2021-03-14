@@ -1,8 +1,6 @@
 import { pointsDTO } from './points.dto';
 
-export class PerfilDTO {
+export class usersPointsDTO {
   username: string;
-  email: string;
-  phone: string;
   points: pointsDTO;
 }
