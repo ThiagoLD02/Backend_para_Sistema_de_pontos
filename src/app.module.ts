@@ -11,7 +11,7 @@ import { PointModule } from './point/point.module';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'senha',
+      password: '240120',
       database: 'sisPontos',
       entities: [User, Point],
       synchronize: true,
