@@ -56,7 +56,7 @@ export class UserService {
     return data;
   }
 
-  async perfil(id: number): Promise<PerfilDTO> {
+  async perfil(id: number) {
     const user = await this.userRepository.findOne(id);
     if (!user) throw new BadRequestException(`Usuario não encontrado`);
 
@@ -65,7 +65,7 @@ export class UserService {
     data.email = user.email;
     data.phone = user.phone;
 
-    data.points = await this.pointService.getPointsByUserId(user.id);
+    data.points = await this.pointService.perfil(id);
 
     return data;
   }
@@ -96,14 +96,6 @@ export class UserService {
 
     return users;
   }
-
-  // async membersPoints(){
-  //   const usersIds = await this.userRepository
-  //   .createQueryBuilder('User')
-  //   .select('User.id')
-  //   .getMany();
-  //   const points = await this.pointService.usersPoints(usersIds);
-  // }
 
   async cadastro(userParams: UserDTO) {
     if (userParams.role != 'director' && userParams.role != 'member')

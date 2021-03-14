@@ -4,5 +4,5 @@ export class PerfilDTO {
   username: string;
   email: string;
   phone: string;
-  points: Point[];
+  points: any;
 }

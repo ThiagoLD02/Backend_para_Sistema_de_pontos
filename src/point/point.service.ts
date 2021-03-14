@@ -35,8 +35,6 @@ export class PointService {
       .createQueryBuilder('Point')
       .where('Point.userId = :userId', { userId: userId })
       .getMany();
-    if (!point || point.length == 0)
-      throw new BadRequestException('Nenhum ponto encontrado');
     return point;
   }
 
@@ -117,7 +115,11 @@ export class PointService {
 
     hours = endHours - startHours;
 
-    point.total = `${hours}:${minutes}:${seconds}`;
+    if (hours < 10) var hoursAux = '0' + hours.toString();
+    if (minutes < 10) var minutesAux = '0' + minutes.toString();
+    if (seconds < 10) var secondsAux = '0' + seconds.toString();
+
+    point.total = `${hoursAux}:${minutesAux}:${secondsAux}`;
     point.time = '00:00:00';
     point.running = false;
     console.log([hours, minutes, seconds], 'Resultado');
@@ -126,12 +128,52 @@ export class PointService {
   }
 
   async perfil(userId: number) {
-    const times = await this.pointRepository
+    const points = await this.pointRepository
       .createQueryBuilder('Points')
       .select('Points.total')
       .where('Points.userId = :userId', { userId: userId })
       .getMany();
-    return times;
+    var times = [''];
+    times.pop();
+    points.forEach((point) => {
+      times.push(point.total);
+    });
+    if (times.length < 5) {
+      const size = times.length;
+      for (let index = 0; index < 5 - size; index++) {
+        console.log(index, 'index');
+        times.push('00:00:00');
+      }
+    }
+    console.log(times, 'times');
+
+    var Intsum = [0, 0, 0];
+    times.forEach((time) => {
+      const splitedTimes = time.split(':');
+      const hours = parseInt(splitedTimes[0]);
+      const minutes = parseInt(splitedTimes[1]);
+      const seconds = parseInt(splitedTimes[2]);
+      if (Intsum[2] + seconds >= 60) {
+        Intsum[2] = 0;
+        Intsum[1] += 1;
+      } else Intsum[2] += seconds;
+
+      if (Intsum[1] + minutes >= 60) {
+        Intsum[1] = 0;
+        Intsum[0] += 1;
+      } else Intsum[1] += minutes;
+      Intsum[0] += hours;
+    });
+
+    var sum = '';
+
+    if (Intsum[0] < 10) var hoursAux = '0' + Intsum[0].toString();
+    if (Intsum[1] < 10) var minutesAux = '0' + Intsum[1].toString();
+    if (Intsum[2] < 10) var secondsAux = '0' + Intsum[2].toString();
+
+    sum = `${hoursAux}:${minutesAux}:${secondsAux}`;
+    const res = { times, sum };
+    return res;
   }
 
   async getAllFiltered(): Promise<Point[]> {
@@ -146,6 +188,8 @@ export class PointService {
 
   async delete(userId: number) {
     const points = await this.getPointsByUserId(userId);
+    if (!points || points.length == 0)
+      throw new BadRequestException('Nenhum ponto encontrado');
     let ids: number[] = [];
     points.forEach((point) => {
       ids.push(point.id);
