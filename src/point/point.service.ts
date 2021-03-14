@@ -51,12 +51,18 @@ export class PointService {
     return points[index - 1];
   }
 
-  async start(user: User): Promise<Point> {
+  getTime() {
     const datetime = new Date();
     const today = datetime.getDay();
     const hours = datetime.getHours();
     const minutes = datetime.getMinutes();
     const seconds = datetime.getSeconds();
+
+    return { today, hours, minutes, seconds };
+  }
+
+  async start(user: User): Promise<Point> {
+    const { today, hours, minutes, seconds } = this.getTime();
 
     if (hours < 10) var hoursAux = '0' + hours.toString();
     else var hoursAux = hours.toString();
@@ -88,52 +94,100 @@ export class PointService {
       return todaysPoint;
     }
   }
+  /**
+   * Retorna a soma dos pontos do usuario
+   */
+  sumTimes(
+    totalSplited: string[],
+    hours: number,
+    minutes: number,
+    seconds: number,
+  ) {
+    let lastHours = parseInt(totalSplited[0]);
+    let lastMinutes = parseInt(totalSplited[1]);
+    let lastSeconds = parseInt(totalSplited[2]);
 
-  async end(userId: number) {
-    // Now
-    const datetime = new Date();
-    const today = datetime.getDay();
-    const endHours = datetime.getHours();
-    const endMinutes = datetime.getMinutes();
-    const endSeconds = datetime.getSeconds();
-    const point = await this.getTodayLastPoint(userId, today);
-    if (!point || point.time === '00:00:00')
-      throw new BadRequestException('Nenhum ponto iniciado');
-    // Start => 00:00:00
+    if (lastSeconds + seconds >= 60) {
+      lastMinutes += 1;
+      lastSeconds = seconds + lastSeconds - 60;
+    } else lastSeconds += seconds;
+
+    if (lastMinutes + minutes >= 60) {
+      lastHours += 1;
+      lastMinutes = minutes + lastMinutes - 60;
+    } else lastMinutes += minutes;
+
+    lastHours += hours;
+
+    const res = [lastHours, lastMinutes, lastSeconds];
+    return res;
+  }
+
+  calculatePointDuration(
+    splitedStart: string[],
+    endHours: number,
+    endMinutes: number,
+    endSeconds: number,
+  ) {
     // When point was started
-    const splitedStart = point.time.split(':');
     let startHours = parseInt(splitedStart[0]);
     let startMinutes = parseInt(splitedStart[1]);
     let startSeconds = parseInt(splitedStart[2]);
 
-    // For the final answer
-    let seconds = 0,
-      minutes = 0,
-      hours = 0;
+    let calcSeconds = 0,
+      calcMinutes = 0,
+      CalcHours = 0;
     if (endSeconds < startSeconds) {
-      seconds = 60 + endSeconds - startSeconds;
-      startMinutes -= 1;
+      calcSeconds = 60 + endSeconds - startSeconds;
+      endMinutes -= 1;
     } else {
-      seconds = endSeconds - startSeconds;
+      calcSeconds = endSeconds - startSeconds;
     }
     if (endMinutes < startMinutes) {
-      minutes = 60 + endMinutes - startMinutes;
-      startMinutes -= 1;
+      calcMinutes = 60 + endMinutes - startMinutes;
+      endHours -= 1;
     } else {
-      minutes = endMinutes - startMinutes;
+      calcMinutes = endMinutes - startMinutes;
     }
 
-    hours = endHours - startHours;
+    CalcHours = endHours - startHours;
+    const duration = { CalcHours, calcMinutes, calcSeconds };
+    return duration;
+  }
 
-    if (hours < 10) var hoursAux = '0' + hours.toString();
-    else var hoursAux = hours.toString();
-    if (minutes < 10) var minutesAux = '0' + minutes.toString();
-    else var minutesAux = minutes.toString();
-    if (seconds < 10) var secondsAux = '0' + seconds.toString();
-    else var secondsAux = seconds.toString();
+  async end(userId: number) {
+    const { today, hours, minutes, seconds } = this.getTime();
+
+    const point = await this.getTodayLastPoint(userId, today);
+    if (!point || point.time === '00:00:00')
+      throw new BadRequestException('Nenhum ponto iniciado');
+
+    // When there is some point running
+    const splitedStart = point.time.split(':');
+    const { CalcHours, calcMinutes, calcSeconds } = this.calculatePointDuration(
+      splitedStart,
+      hours,
+      minutes,
+      seconds,
+    );
+
+    const totalSplited = point.total.split(':');
+    const time = this.sumTimes(
+      totalSplited,
+      CalcHours,
+      calcMinutes,
+      calcSeconds,
+    );
+
+    if (time[0] < 10) var hoursAux = '0' + time[0].toString();
+    else var hoursAux = time[0].toString();
+    if (time[1] < 10) var minutesAux = '0' + time[1].toString();
+    else var minutesAux = time[1].toString();
+    if (time[2] < 10) var secondsAux = '0' + time[2].toString();
+    else var secondsAux = time[2].toString();
 
     point.total = `${hoursAux}:${minutesAux}:${secondsAux}`;
-    point.time = '00:00:00';
+    point.time = `${hours}:${minutes}:${seconds}`;
     point.running = false;
 
     return await (await this.pointRepository.preload(point)).save();
@@ -145,37 +199,37 @@ export class PointService {
       .select('Points.total')
       .where('Points.userId = :userId', { userId: userId })
       .getMany();
-    var times = [''];
-    times.pop();
+
+    var times: string[] = [];
     points.forEach((point) => {
       times.push(point.total);
     });
-    if (times.length < 5) {
-      const size = times.length;
-      for (let index = 0; index < 5 - size; index++) {
-        times.push('00:00:00');
-      }
-    }
 
     var Intsum = [0, 0, 0];
+
     times.forEach((time) => {
       const splitedTimes = time.split(':');
       const hours = parseInt(splitedTimes[0]);
       const minutes = parseInt(splitedTimes[1]);
       const seconds = parseInt(splitedTimes[2]);
       if (Intsum[2] + seconds >= 60) {
-        Intsum[2] = 0;
+        Intsum[2] = Intsum[2] + seconds - 60;
         Intsum[1] += 1;
       } else Intsum[2] += seconds;
 
       if (Intsum[1] + minutes >= 60) {
-        Intsum[1] = 0;
+        Intsum[1] = Intsum[1] + minutes - 60;
         Intsum[0] += 1;
       } else Intsum[1] += minutes;
       Intsum[0] += hours;
     });
 
-    var sum = '';
+    if (times.length < 5) {
+      const size = times.length;
+      for (let index = 0; index < 5 - size; index++) {
+        times.push('00:00:00');
+      }
+    }
 
     if (Intsum[0] < 10) var hoursAux = '0' + Intsum[0].toString();
     else var hoursAux = Intsum[0].toString();
@@ -184,7 +238,7 @@ export class PointService {
     if (Intsum[2] < 10) var secondsAux = '0' + Intsum[2].toString();
     else var secondsAux = Intsum[2].toString();
 
-    sum = `${hoursAux}:${minutesAux}:${secondsAux}`;
+    const sum = `${hoursAux}:${minutesAux}:${secondsAux}`;
     const res = new pointsDTO();
     res.sum = sum;
     res.times = times;
@@ -203,8 +257,7 @@ export class PointService {
 
   async delete(userId: number) {
     const points = await this.getPointsByUserId(userId);
-    if (!points || points.length == 0)
-      throw new BadRequestException('Nenhum ponto encontrado');
+    if (!points || points.length == 0) return;
     let ids: number[] = [];
     points.forEach((point) => {
       ids.push(point.id);
