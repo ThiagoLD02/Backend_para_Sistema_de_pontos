@@ -255,6 +255,12 @@ export class PointService {
     return points;
   }
 
+  async deleteAllUsersPoints(ids: number[]) {
+    ids.forEach((id) => {
+      this.delete(id);
+    });
+  }
+
   async delete(userId: number) {
     const points = await this.getPointsByUserId(userId);
     if (!points || points.length == 0) return;

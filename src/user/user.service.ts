@@ -171,6 +171,11 @@ export class UserService {
     return await (await this.userRepository.preload(user)).save();
   }
 
+  async deleteAllUsersPoints(){
+    const ids = await this.usersIds();
+    this.pointService.deleteAllUsersPoints(ids);
+  }
+
   async remove(userId: number): Promise<User> {
     const user = await this.userRepository.findOne(userId);
     if (!user) throw new BadRequestException(`Usuario não encontrado`);

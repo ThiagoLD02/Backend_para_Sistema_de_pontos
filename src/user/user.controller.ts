@@ -80,4 +80,9 @@ export class UserController {
   async remove(@Param('id') id: number): Promise<User> {
     return this.userService.remove(id);
   }
+
+  @Delete()
+  async deleteAllUsersPoints() {
+    return this.userService.deleteAllUsersPoints();
+  }
 }
